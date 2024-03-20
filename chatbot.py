@@ -6,12 +6,14 @@ from sklearn.metrics.pairwise import cosine_similarity
 import json
 # pip install numpy==1.23.0
 
-@st.cache(allow_output_mutation=True) # 한 번만 로드해서 사용
+@st.cache_resource
+#@st.cache(allow_output_mutation=True) # 한 번만 로드해서 사용
 def cached_model():
     model = SentenceTransformer('jhgan/ko-sroberta-multitask')
     return model
 
-@st.cache(allow_output_mutation=True)
+@st.cache_resource
+#@st.st.cache(allow_output_mutation=True)
 def get_dataset():
     df = pd.read_csv('wellness_dataset.csv')
     df['embedding'] = df['embedding'].apply(json.loads)
