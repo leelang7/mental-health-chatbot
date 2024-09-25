@@ -4,6 +4,7 @@ import pandas as pd
 from sentence_transformers import SentenceTransformer #sentence_transformer 설치 필요
 from sklearn.metrics.pairwise import cosine_similarity
 import json
+import numpy as np
 # pip install numpy==1.23.0
 
 @st.cache_resource
@@ -15,7 +16,7 @@ def cached_model():
 @st.cache_resource
 #@st.st.cache(allow_output_mutation=True)
 def get_dataset():
-    df = pd.read_csv('wellness_dataset.csv')
+    df = pd.read_csv('aihub_dataset.csv')
     df['embedding'] = df['embedding'].apply(json.loads)
     return df
 
@@ -23,7 +24,7 @@ model = cached_model()
 df = get_dataset()
 
 st.header('심리상담 챗봇')
-st.markdown("[코리아 IT 아카데미], 이석창 강사)")
+st.markdown("Elice Chatbot")
 
 if 'generated' not in st.session_state:
     st.session_state['generated'] = [] # 대화한 내용 저장
@@ -38,11 +39,16 @@ with st.form('form', clear_on_submit=True): # 사용자 입력 폼
 if submitted and user_input:
     embedding = model.encode(user_input)
 
-    df['distance'] = df['embedding'].map(lambda x: cosine_similarity([embedding], [x]).squeeze())
+    # 임베딩 정규화
+    embedding_norm = np.linalg.norm(embedding)
+    df['distance'] = df['embedding'].apply(
+        lambda x: np.dot(embedding, x) / (embedding_norm * np.linalg.norm(x))
+    )
+    
     answer = df.loc[df['distance'].idxmax()]
 
     st.session_state.past.append(user_input)
-    st.session_state.generated.append(answer['챗봇'])
+    st.session_state.generated.append(answer['시스템문장1'])
 
 for i in range(len(st.session_state['past'])):
     message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
